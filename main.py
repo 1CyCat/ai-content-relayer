@@ -2,7 +2,7 @@
 #libraries
 import feedparser
 import requests
-from pyrogram import Client, filters
+from pyrogram import Client , filters 
 from pyrogram.enums import ChatMemberStatus
 from pyrogram.errors import UserNotParticipant, PeerIdInvalid
 from pyrogram.types import Message
@@ -36,7 +36,7 @@ power = Client(
 
 #gemini client
 api_key = 'AIzaSyDpRAjc8Lx0SYF6PKoouX0WUGfDUkGM7yI'
-client = genai.Client(api_key=api_key)
+geminiai = genai.Client(api_key=api_key)
 
 #resouces
 resource_sites = {
@@ -98,7 +98,7 @@ async def check_sites(): # Do all about site stuff
             releasable_feed = new_feed.entries[1]
             news_for_release = releasable_feed.description
 
-            response = client.models.generate_content(
+            response = geminiai.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=f"{prompt}\n{news_for_release}"
             )
@@ -134,6 +134,8 @@ async def main():
         print("Stopping...")
 
     await power.stop()
+    while True:
+        await asyncio.sleep(60)    
 
 if __name__ == "__main__":
     asyncio.run(main())
