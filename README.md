@@ -22,18 +22,6 @@ It uses the **Pyrogram** library for interacting with Telegram Bot API and **fee
 
 ---
 
-## 📂 Project Structure
-ai-content-relayer/
-│
-├── main.py # Main script
-└── README.md # Project documentation
-
-yaml
-Copy
-Edit
-
----
-
 ## ⚙️ Requirements
 - Python **3.8+**
 - Telegram **api_id** and **api_hash** (from [my.telegram.org](https://my.telegram.org))
