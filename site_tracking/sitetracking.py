@@ -4,6 +4,7 @@ import feedparser
 from pyrogram import Client
 import asyncio
 import os
+from google import genai
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SETTING_FILE = os.path.join(BASE_DIR, "data-setting.json")
@@ -16,6 +17,8 @@ tokenbot = data.get("bot_token")
 target_chnl = data.get("goal_id")
 apiid = data['api_id']
 apihash = data['api_hash']
+if data['ai']['val'] :
+    ai_api = data['ai']['api_token']
 
 proxy = dict(hostname="127.0.0.1", port=1089, scheme="socks5") if data.get("local_proxy_enabled") else None
 
@@ -27,6 +30,10 @@ bot = Client(
     proxy=proxy
 )
 
+prompt_file = os.path.join(BASE_DIR,"prompt.txt")
+with open(prompt_file,'r') as f :
+    prompt = f.read()
+gemini = genai.Client(api_key=ai_api)
 
 def checkingfornew(site_name: str) -> bool:
     fname = os.path.join(os.path.dirname(__file__), f"{site_name}.txt")
@@ -66,12 +73,20 @@ async def check_sites(poll_interval: int = 30):
                     if not feed.entries:
                         continue
                     entry = feed.entries[0]
-                    # description یا summary یا title را بردار
                     body = getattr(entry, "description", None) or getattr(entry, "summary", None) or getattr(entry, "title", "")
                     text = f"new feed from site {site}:\n\n{body}\n\n{getattr(entry, 'link', '')}"
+
                     try:
-                        await bot.send_message(target_chnl, text)
-                        print(f"Sent feed from {site} to {target_chnl}")
+                        response = gemini.models.generate_content(
+                            model="gemini-2.5-flash", contents=f"{prompt}\n{text}"
+                        )
+                        print(f"Ai done his work (on {site}), send message to telgram ...")
+                    except Exception as e:
+                        print(f'ther is an error in Ai responsing:\n{e}')
+                    
+                    try:
+                        await bot.send_message(target_chnl, f"{site}:\n\n{response.text}")
+                        print(f"Sent feed from {site} to {target_chnl}\n\n")
                     except Exception as e:
                         print("Failed to send message:", e)
             except Exception as e:
@@ -81,7 +96,6 @@ async def check_sites(poll_interval: int = 30):
 
 async def run(poll_interval: int = 30):
     async with bot:
-        # اجرای چک کردن سایت‌ها در پس‌زمینه
         task = asyncio.create_task(check_sites(poll_interval))
         print("site-tracker started")
-        await asyncio.Event().wait()  # نگه داشتن تا قطع دستی
+        await asyncio.Event().wait() 

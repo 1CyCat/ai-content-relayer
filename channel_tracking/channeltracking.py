@@ -57,13 +57,13 @@ def run_channel_tracker():
             response = gemini.models.generate_content(
                 model="gemini-2.5-flash", contents=f"{prompt}\n{message.text}"
             )
-            print(f"Ai done his work (on {message.chat.title}), end message to telgram ...")
+            print(f"Ai done his work (on {message.chat.title}), send message to telgram ...")
         except Exception as e:
             print(f'ther is an error in Ai responsing:\n{e}')
 
         client.send_message(
             chat_id=target_chnl,
-            text=f"{response.text}"
+            text=f"{message.chat.title}:\n\n{response.text}"
         )
 
     print("Channel tracker is running...")
