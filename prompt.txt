@@ -10,5 +10,3 @@ The output must follow these rules:
 6. If possible, provide a short headline and 1-2 relevant hashtags.
 
 Now, summarize the following text according to the rules above:
-
-{incoming_message_text}
