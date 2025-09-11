@@ -22,8 +22,16 @@ number = str(data['number'])
 if not number.startswith("+"):
     number = "+" + number
 source_channels: list = data['source_channels']
+
 if data['ai']['val'] :
+    usingAi = True
     ai_api = data['ai']['api_token']
+    prompt_file = os.path.join(BASE_DIR,"prompt.txt")
+    with open(prompt_file,'r') as f :
+        prompt = f.read()
+    gemini = genai.Client(api_key=ai_api)
+else :
+    usingAi = False
 
 acc = Client(
     'tg-channel-tracker',
@@ -32,10 +40,7 @@ acc = Client(
     phone_number=number,
     proxy=dict(hostname=proxy_host, port=proxy_port, scheme="socks5") if data['local_proxy_enabled'] else None
 )
-prompt_file = os.path.join(BASE_DIR,"prompt.txt")
-with open(prompt_file,'r') as f :
-    prompt = f.read()
-gemini = genai.Client(api_key=ai_api)
+
 
 def run_channel_tracker():
     app = Client(
@@ -53,18 +58,30 @@ def run_channel_tracker():
 
         print(f"New post from [{message.chat.title}]")
 
-        try:
-            response = gemini.models.generate_content(
-                model="gemini-2.5-flash", contents=f"{prompt}\n{message.text}"
+        if usingAi == True :
+            try:
+                response = gemini.models.generate_content(
+                    model="gemini-2.5-flash", contents=f"{prompt}\n{message.text}"
+                )
+                print(f"Ai done his work (on {message.chat.title}), send message to telgram ...")
+            except Exception as e:
+                print(f'ther is an error in Ai responsing:\n{e}')
+
+            client.send_message(
+                chat_id=target_chnl,
+                text=f"{message.chat.title}:\n\n{response.text}"
             )
-            print(f"Ai done his work (on {message.chat.title}), send message to telgram ...")
-        except Exception as e:
-            print(f'ther is an error in Ai responsing:\n{e}')
+            print("Output (from ai) released in goal channel !")
+        
+        if usingAi == False :
+            
+            client.send_message(
+                chat_id=target_chnl,
+                text=f"{message.chat.title}:\n\n{message.text}"
+            )
+            print("Output (without summrization) released in goal channel !")
 
-        client.send_message(
-            chat_id=target_chnl,
-            text=f"{message.chat.title}:\n\n{response.text}"
-        )
 
-    print("Channel tracker is running...")
+
+    print("Channel tracker is starting...")
     app.run()
